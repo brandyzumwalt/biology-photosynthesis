@@ -27,7 +27,34 @@
           </div>
         </div>
 
-        <p id="learnCaption" class="caption" role="status" aria-live="polite"></p>
+        <div class="learn-toolbar">
+          <div class="learn-settings">
+            <label class="setting-item">
+              Speed
+              <select id="speedSelect">
+                <option value="0.5">0.5x</option>
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+              </select>
+            </label>
+
+            <label class="setting-item">
+              Visual Mode
+              <select id="visualModeSelect">
+                <option value="normal" selected>Standard</option>
+                <option value="colorblind">Colorblind-Friendly</option>
+              </select>
+            </label>
+
+            <label class="setting-item setting-toggle">
+              <input id="reducedMotionToggle" type="checkbox" />
+              Reduced Motion
+            </label>
+          </div>
+          <div id="stepTimeline" class="step-timeline" aria-label="Cycle step timeline"></div>
+        </div>
 
         <div class="learn-actions">
           <button id="startResetBtn" type="button">Start</button>
@@ -37,6 +64,8 @@
           <button id="playFullBtn" type="button">Play Full Cycle</button>
           <button id="goToReviewBtn" type="button">Go To Review</button>
         </div>
+
+        <p id="learnCaption" class="caption" role="status" aria-live="polite"></p>
 
         <div class="animation-panel" aria-label="Animation panel">
           <div class="legend" aria-label="Animation key">

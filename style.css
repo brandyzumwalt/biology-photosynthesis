@@ -143,6 +143,81 @@ h3 {
   font-weight: 600;
 }
 
+.learn-toolbar {
+  margin-top: 0.65rem;
+  border: 1px solid #355175;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #152b47 0%, #12253f 100%);
+  padding: 0.6rem 0.7rem;
+  display: grid;
+  gap: 0.58rem;
+}
+
+.learn-settings {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.setting-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  font-size: 0.86rem;
+  color: #d5e5ff;
+  border: 1px solid #3d577b;
+  background: #162d49;
+  border-radius: 8px;
+  padding: 0.34rem 0.45rem;
+}
+
+.setting-item select {
+  background: #10213a;
+  color: var(--ink);
+  border: 1px solid #49658f;
+  border-radius: 6px;
+  padding: 0.2rem 0.3rem;
+  font: inherit;
+}
+
+.setting-toggle {
+  padding-right: 0.6rem;
+}
+
+.setting-toggle input {
+  accent-color: #46bca8;
+}
+
+.step-timeline {
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
+}
+
+.timeline-step {
+  border: 1px solid #496388;
+  background: #16304f;
+  color: #d7e7ff;
+  border-radius: 999px;
+  padding: 0.26rem 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.timeline-step.current {
+  background: #1e4e87;
+  border-color: #73a6e7;
+  color: #eef6ff;
+  box-shadow: 0 0 0 1px rgba(115, 166, 231, 0.35) inset;
+}
+
+.timeline-step.complete {
+  background: #195a4f;
+  border-color: #3ec4aa;
+  color: #d8fff3;
+}
+
 .learn-actions,
 .review-actions {
   display: flex;
@@ -308,6 +383,28 @@ button:disabled {
   color: #214b28;
   width: 34px;
   border-radius: 7px;
+}
+
+body.visual-colorblind .legend-swatch.photon {
+  background: radial-gradient(circle, #ffe486 34%, #f1b941 80%);
+  border-color: #8f6400;
+  color: #704700;
+}
+
+body.visual-colorblind .legend-swatch.photosystem {
+  background: radial-gradient(circle, #f3c27f 32%, #cf8728 80%);
+  border-color: #7d4810;
+}
+
+body.visual-colorblind .legend-swatch.electron {
+  background: radial-gradient(circle, #9ed7ff 32%, #2f9add 82%);
+  border-color: #124a78;
+}
+
+body.visual-colorblind .legend-swatch.proton {
+  background: radial-gradient(circle, #c9b7ff 34%, #9982ff 82%);
+  border-color: #4e3ea2;
+  color: #2d1b6f;
 }
 
 #animationCanvas {
@@ -485,6 +582,15 @@ button:disabled {
 }
 
 @media (max-width: 980px) {
+  .learn-settings {
+    gap: 0.45rem;
+  }
+
+  .setting-item {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .animation-panel {
     grid-template-columns: 1fr;
   }

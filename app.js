@@ -31,8 +31,8 @@
     }
   ];
 
-  const STEP_DURATION_MS = 2600;
-  const STEP_PAUSE_MS = 600;
+  const BASE_STEP_DURATION_MS = 2600;
+  const BASE_STEP_PAUSE_MS = 600;
 
   const SCENE = {
     membrane: { x: 70, y: 120, width: 410, height: 110, radius: 48 },
@@ -59,6 +59,10 @@
     learnLightBtn: document.getElementById("learnLightBtn"),
     learnCalvinBtn: document.getElementById("learnCalvinBtn"),
     learnCaption: document.getElementById("learnCaption"),
+    speedSelect: document.getElementById("speedSelect"),
+    visualModeSelect: document.getElementById("visualModeSelect"),
+    reducedMotionToggle: document.getElementById("reducedMotionToggle"),
+    stepTimeline: document.getElementById("stepTimeline"),
     startResetBtn: document.getElementById("startResetBtn"),
     prevStepBtn: document.getElementById("prevStepBtn"),
     nextStepBtn: document.getElementById("nextStepBtn"),
@@ -89,7 +93,13 @@
     learn: {
       phaseIndex: 0,
       stepIndex: 0,
-      progressedByPhase: [false, false]
+      progressedByPhase: [false, false],
+      completedStepsByPhase: PHASES.map((phase) => Array(phase.steps.length).fill(false)),
+      settings: {
+        speed: 1,
+        visualMode: "normal",
+        reducedMotion: false
+      }
     },
     review: {
       phaseIndex: 0,
@@ -135,6 +145,78 @@
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
+  }
+
+  function currentMotionScale() {
+    return state.learn.settings.reducedMotion ? 0.65 : 1;
+  }
+
+  function currentStepDurationMs() {
+    const speed = clamp(state.learn.settings.speed, 0.5, 1.75);
+    return Math.round((BASE_STEP_DURATION_MS * currentMotionScale()) / speed);
+  }
+
+  function currentStepPauseMs() {
+    const speed = clamp(state.learn.settings.speed, 0.5, 1.75);
+    return Math.round((BASE_STEP_PAUSE_MS * currentMotionScale()) / speed);
+  }
+
+  function currentVisualMode() {
+    return state.learn.settings.visualMode === "colorblind" ? "colorblind" : "normal";
+  }
+
+  function currentPalette() {
+    const mode = currentVisualMode();
+    if (mode === "colorblind") {
+      return {
+        photonFill: "#ffd53f",
+        photonStroke: "#8f6400",
+        photonRay: "rgba(143, 100, 0, 0.56)",
+        photosystemBase: "#d38a2d",
+        photosystemHot: "#f0aa3e",
+        photosystemStroke: "#7d4810",
+        electronFill: "#3ea0e3",
+        electronStroke: "#124a78",
+        ionFill: "#9a83ff",
+        ionStroke: "#4e3ea2",
+        ionInk: "#2d1b6f"
+      };
+    }
+    return {
+      photonFill: "#ffe67a",
+      photonStroke: "#bf8b12",
+      photonRay: "rgba(204, 140, 27, 0.46)",
+      photosystemBase: "#a0cf69",
+      photosystemHot: "#b8e47c",
+      photosystemStroke: "#4f7f2a",
+      electronFill: "#8bb8ff",
+      electronStroke: "#2f5f8f",
+      ionFill: "#f8b8d4",
+      ionStroke: "#9f4f72",
+      ionInk: "#7d2f53"
+    };
+  }
+
+  function isStepComplete(phaseIndex, stepIndex) {
+    return Boolean(state.learn.completedStepsByPhase[phaseIndex]?.[stepIndex]);
+  }
+
+  function markStepComplete(phaseIndex, stepIndex) {
+    if (!state.learn.completedStepsByPhase[phaseIndex]) {
+      return;
+    }
+    state.learn.completedStepsByPhase[phaseIndex][stepIndex] = true;
+  }
+
+  function clearPhaseStepCompletion(phaseIndex) {
+    if (!state.learn.completedStepsByPhase[phaseIndex]) {
+      return;
+    }
+    state.learn.completedStepsByPhase[phaseIndex].fill(false);
+  }
+
+  function applyVisualModeClass() {
+    document.body.classList.toggle("visual-colorblind", currentVisualMode() === "colorblind");
   }
 
   function phaseByIndex(idx) {
@@ -235,6 +317,58 @@
     els.playFullBtn.disabled = isRunning;
   }
 
+  function renderLearnSettings() {
+    const speedValue = String(state.learn.settings.speed);
+    if (els.speedSelect.value !== speedValue) {
+      els.speedSelect.value = speedValue;
+    }
+
+    const modeValue = currentVisualMode();
+    if (els.visualModeSelect.value !== modeValue) {
+      els.visualModeSelect.value = modeValue;
+    }
+
+    els.reducedMotionToggle.checked = state.learn.settings.reducedMotion;
+  }
+
+  function renderStepTimeline() {
+    const phaseIndex = state.learn.phaseIndex;
+    const phase = phaseByIndex(phaseIndex);
+    const isRunning = state.animation.running;
+
+    els.stepTimeline.innerHTML = "";
+    phase.steps.forEach((_, stepIdx) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "timeline-step";
+      item.textContent = String(stepIdx + 1);
+      item.title = phase.steps[stepIdx];
+      item.setAttribute("aria-label", `Step ${stepIdx + 1}`);
+
+      const stepRunning =
+        isRunning && state.animation.phaseId === phase.id && state.animation.stepIdx === stepIdx;
+      if (stepRunning || (!isRunning && state.learn.stepIndex === stepIdx)) {
+        item.classList.add("current");
+      }
+      if (isStepComplete(phaseIndex, stepIdx)) {
+        item.classList.add("complete");
+      }
+      if (isRunning) {
+        item.disabled = true;
+      }
+
+      item.addEventListener("click", () => {
+        if (state.animation.running) {
+          return;
+        }
+        setLearnStep(stepIdx);
+        startSingleStepReplay();
+      });
+
+      els.stepTimeline.appendChild(item);
+    });
+  }
+
   function renderLearnCaption() {
     if (state.animation.running) {
       return;
@@ -244,7 +378,9 @@
 
   function renderLearn() {
     renderLearnPhaseTabs();
+    renderLearnSettings();
     renderLearnActions();
+    renderStepTimeline();
     renderLearnCaption();
   }
 
@@ -512,6 +648,7 @@
     stopAnimation(true);
     state.learn.stepIndex = 0;
     state.learn.progressedByPhase[state.learn.phaseIndex] = false;
+    clearPhaseStepCompletion(state.learn.phaseIndex);
     renderLearn();
   }
 
@@ -598,11 +735,14 @@
       return;
     }
 
+    const stepDuration = currentStepDurationMs();
+    const stepPause = currentStepPauseMs();
     const elapsed = timestamp - state.animation.stepStartTs;
-    const stepTotal = STEP_DURATION_MS + STEP_PAUSE_MS;
+    const stepTotal = stepDuration + stepPause;
 
     if (elapsed >= stepTotal) {
       if (state.animation.mode === "single") {
+        markStepComplete(state.learn.phaseIndex, state.learn.stepIndex);
         state.animation.frozen = {
           phaseId: state.animation.phaseId,
           stepIdx: state.animation.stepIdx,
@@ -618,6 +758,7 @@
 
       state.animation.stepIdx += 1;
       if (state.animation.stepIdx >= phase.steps.length) {
+        state.learn.completedStepsByPhase[state.learn.phaseIndex].fill(true);
         state.animation.frozen = {
           phaseId: state.animation.phaseId,
           stepIdx: phase.steps.length - 1,
@@ -633,6 +774,7 @@
       }
 
       state.animation.stepStartTs = timestamp;
+      markStepComplete(state.learn.phaseIndex, state.animation.stepIdx - 1);
       state.learn.stepIndex = state.animation.stepIdx;
       if (state.learn.stepIndex > 0) {
         state.learn.progressedByPhase[state.learn.phaseIndex] = true;
@@ -641,8 +783,8 @@
       renderLearn();
     }
 
-    const withinStep = Math.min(elapsed, STEP_DURATION_MS);
-    const progress = withinStep / STEP_DURATION_MS;
+    const withinStep = Math.min(elapsed, stepDuration);
+    const progress = withinStep / stepDuration;
     drawStepFrame(state.animation.phaseId, state.animation.stepIdx, progress, timestamp);
 
     requestAnimationFrame(animationTick);
@@ -663,6 +805,23 @@
 
     els.learnCalvinBtn.addEventListener("click", () => {
       setLearnPhase(1);
+    });
+
+    els.speedSelect.addEventListener("change", () => {
+      const parsed = Number(els.speedSelect.value);
+      state.learn.settings.speed = Number.isFinite(parsed) ? clamp(parsed, 0.5, 1.75) : 1;
+      renderLearn();
+    });
+
+    els.visualModeSelect.addEventListener("change", () => {
+      state.learn.settings.visualMode = els.visualModeSelect.value === "colorblind" ? "colorblind" : "normal";
+      applyVisualModeClass();
+      renderLearn();
+    });
+
+    els.reducedMotionToggle.addEventListener("change", () => {
+      state.learn.settings.reducedMotion = els.reducedMotionToggle.checked;
+      renderLearn();
     });
 
     els.startResetBtn.addEventListener("click", () => {
@@ -736,6 +895,7 @@
   }
 
   function init() {
+    applyVisualModeClass();
     wireEvents();
     clearReviewFeedback();
     renderLearn();
@@ -764,10 +924,12 @@
     drawBackdrop(w, h, timeMs);
     drawStructures(highlights, timeMs);
     drawAmbient(timeMs, highlights, w, h);
+    drawFocusLayer(highlights);
     drawLabels();
   }
 
   function drawBackdrop(width, height, timeMs) {
+    const motion = currentMotionScale();
     const sky = ctx.createLinearGradient(0, 0, 0, height * 0.56);
     sky.addColorStop(0, "#d8efff");
     sky.addColorStop(1, "#ebf7ff");
@@ -780,14 +942,14 @@
     ctx.fillStyle = stroma;
     ctx.fillRect(0, height * 0.52, width, height * 0.48);
 
-    const waveShift = Math.sin(timeMs / 1300) * 3;
+    const waveShift = Math.sin((timeMs / 1300) * motion) * 3;
     ctx.strokeStyle = "rgba(138, 174, 203, 0.19)";
     ctx.lineWidth = 1.1;
     for (let i = 0; i < 2; i += 1) {
       const y = 67 + i * 30 + waveShift * (i + 1) * 0.16;
       ctx.beginPath();
       for (let x = -20; x <= width + 20; x += 20) {
-        const dy = Math.sin((x + timeMs * 0.028 + i * 36) / 90) * 2.2;
+        const dy = Math.sin((x + timeMs * 0.028 * motion + i * 36) / 90) * 2.2;
         if (x === -20) {
           ctx.moveTo(x, y + dy);
         } else {
@@ -796,6 +958,22 @@
       }
       ctx.stroke();
     }
+
+    ctx.save();
+    const beamAlpha = state.learn.settings.reducedMotion ? 0.08 : 0.13;
+    const beamDrift = Math.sin((timeMs / 1800) * motion) * 24;
+    const beam = ctx.createLinearGradient(20 + beamDrift, 0, 230 + beamDrift, height * 0.56);
+    beam.addColorStop(0, `rgba(255, 248, 198, ${beamAlpha})`);
+    beam.addColorStop(1, "rgba(255, 248, 198, 0)");
+    ctx.fillStyle = beam;
+    ctx.beginPath();
+    ctx.moveTo(30 + beamDrift, 0);
+    ctx.lineTo(210 + beamDrift, 0);
+    ctx.lineTo(330 + beamDrift, height * 0.56);
+    ctx.lineTo(150 + beamDrift, height * 0.56);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
 
     ctx.strokeStyle = "rgba(142, 172, 186, 0.45)";
     ctx.lineWidth = 2;
@@ -806,8 +984,10 @@
   }
 
   function drawStructures(highlights, timeMs) {
+    const palette = currentPalette();
     const membrane = SCENE.membrane;
-    const pulse = 0.5 + 0.5 * Math.sin(timeMs / 240);
+    const motion = currentMotionScale();
+    const pulse = 0.5 + 0.5 * Math.sin((timeMs / 240) * motion);
 
     for (let i = 0; i < 3; i += 1) {
       drawRoundedRect(
@@ -858,12 +1038,26 @@
       drawGlow(SCENE.ps1.x, SCENE.ps1.y, 34 + pulse * 8, "#94da6b", 0.28);
     }
 
-    drawCircle(SCENE.ps2.x, SCENE.ps2.y, SCENE.ps2.r, highlights.ps2 ? "#b8e47c" : "#a0cf69", "#4f7f2a", 2);
-    drawCircle(SCENE.ps1.x, SCENE.ps1.y, SCENE.ps1.r, highlights.ps1 ? "#b8e47c" : "#a0cf69", "#4f7f2a", 2);
+    drawCircle(
+      SCENE.ps2.x,
+      SCENE.ps2.y,
+      SCENE.ps2.r,
+      highlights.ps2 ? palette.photosystemHot : palette.photosystemBase,
+      palette.photosystemStroke,
+      2
+    );
+    drawCircle(
+      SCENE.ps1.x,
+      SCENE.ps1.y,
+      SCENE.ps1.r,
+      highlights.ps1 ? palette.photosystemHot : palette.photosystemBase,
+      palette.photosystemStroke,
+      2
+    );
     drawTextTag("PSII", SCENE.ps2.x - 18, SCENE.ps2.y - 46, "#ecf7d3", "#446d1f");
     drawTextTag("PSI", SCENE.ps1.x - 13, SCENE.ps1.y - 46, "#ecf7d3", "#446d1f");
 
-    drawEtcComplexes(highlights, pulse);
+    drawEtcComplexes(highlights, pulse, timeMs);
 
     const synthaseBody = SCENE.synthaseBody;
     const synthaseGradient = ctx.createLinearGradient(0, synthaseBody.y, 0, synthaseBody.y + synthaseBody.height);
@@ -910,7 +1104,8 @@
     );
 
     for (let i = 0; i < 6; i += 1) {
-      const angle = ((Math.PI * 2) / 6) * i + pulse * 0.2;
+      const spinBoost = highlights.atpSynthase ? 1.4 : 0.42;
+      const angle = ((Math.PI * 2) / 6) * i + (timeMs / 420) * motion * spinBoost;
       const armX = SCENE.synthaseKnob.x + Math.cos(angle) * 15;
       const armY = SCENE.synthaseKnob.y + Math.sin(angle) * 15;
       ctx.strokeStyle = "rgba(160, 114, 49, 0.55)";
@@ -939,21 +1134,23 @@
   }
 
   function drawAmbient(timeMs, highlights, width, height) {
+    const motion = currentMotionScale();
+
     for (let i = 0; i < 6; i += 1) {
-      const x = ((timeMs * 0.034 + i * 136) % (width + 100)) - 50;
-      const y = 56 + Math.sin((timeMs * 0.0018 + i) * 1.2) * 10;
+      const x = ((timeMs * 0.034 * motion + i * 136) % (width + 100)) - 50;
+      const y = 56 + Math.sin((timeMs * 0.0018 * motion + i) * 1.2) * 10;
       drawPhoton(x, y, 0.24);
     }
 
     for (let i = 0; i < 8; i += 1) {
-      const x = 96 + i * 33 + Math.sin(timeMs * 0.002 + i) * 7;
-      const y = 206 + Math.cos(timeMs * 0.003 + i * 0.8) * 8;
+      const x = 96 + i * 33 + Math.sin(timeMs * 0.002 * motion + i) * 7;
+      const y = 206 + Math.cos(timeMs * 0.003 * motion + i * 0.8) * 8;
       drawIonDot(x, y, 0.15, 3.6);
     }
 
     for (let i = 0; i < 4; i += 1) {
-      const rise = ((timeMs * 0.03 + i * 90) % 120) / 120;
-      const x = 88 + i * 28 + Math.sin(timeMs * 0.002 + i) * 4;
+      const rise = ((timeMs * 0.03 * motion + i * 90) % 120) / 120;
+      const x = 88 + i * 28 + Math.sin(timeMs * 0.002 * motion + i) * 4;
       const y = 232 - rise * 115;
       drawBubble(x, y, 4 + i * 0.6, 0.14);
     }
@@ -973,9 +1170,69 @@
     ctx.shadowBlur = 4;
     ctx.fillText("Thylakoid Membrane", 92, 110);
     ctx.fillText("Stroma", 20, 252);
-    ctx.fillText("Calvin Cycle", 548, 314);
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Calvin Cycle", SCENE.calvin.x, SCENE.calvin.y);
+    ctx.restore();
     ctx.fillText("ATP Synthase", 220, 360);
     ctx.shadowBlur = 0;
+  }
+
+  function drawFocusLayer(highlights) {
+    const active = Object.values(highlights).some(Boolean);
+    if (!active) {
+      return;
+    }
+
+    const width = els.canvas.width;
+    const height = els.canvas.height;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(9, 22, 34, 0.14)";
+    ctx.beginPath();
+    ctx.rect(0, 0, width, height);
+
+    if (highlights.thylakoid) {
+      addRoundedRectPath(
+        SCENE.membrane.x - 16,
+        SCENE.membrane.y - 16,
+        SCENE.membrane.width + 32,
+        SCENE.membrane.height + 32,
+        SCENE.membrane.radius + 20
+      );
+    }
+
+    if (highlights.ps2) {
+      addCirclePath(SCENE.ps2.x, SCENE.ps2.y, 44);
+    }
+
+    if (highlights.ps1) {
+      addCirclePath(SCENE.ps1.x, SCENE.ps1.y, 44);
+    }
+
+    if (highlights.etc) {
+      SCENE.etcPoints.forEach((point) => {
+        addCirclePath(point[0], point[1], 20);
+      });
+    }
+
+    if (highlights.atpSynthase) {
+      addRoundedRectPath(
+        SCENE.synthaseBody.x - 18,
+        SCENE.synthaseBody.y - 28,
+        SCENE.synthaseBody.width + 36,
+        SCENE.synthaseBody.height + 110,
+        SCENE.synthaseBody.radius + 10
+      );
+    }
+
+    if (highlights.calvin) {
+      addCirclePath(SCENE.calvin.x, SCENE.calvin.y, SCENE.calvin.outer + 26);
+    }
+
+    ctx.fill("evenodd");
+    ctx.restore();
   }
 
   function drawCaptionGuide() {
@@ -996,7 +1253,8 @@
     ctx.restore();
   }
 
-  function drawEtcComplexes(highlights, pulse) {
+  function drawEtcComplexes(highlights, pulse, timeMs) {
+    const motion = currentMotionScale();
     const points = SCENE.etcPoints;
     ctx.save();
     ctx.lineCap = "round";
@@ -1021,6 +1279,18 @@
         ctx.lineTo(points[i][0], points[i][1]);
       }
       ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255, 220, 151, 0.85)";
+      ctx.lineWidth = 2.8;
+      ctx.setLineDash([9, 12]);
+      ctx.lineDashOffset = -timeMs * 0.07 * motion;
+      ctx.beginPath();
+      ctx.moveTo(points[0][0], points[0][1]);
+      for (let i = 1; i < points.length; i += 1) {
+        ctx.lineTo(points[i][0], points[i][1]);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     points.forEach((pt, idx) => {
@@ -1035,10 +1305,11 @@
   }
 
   function drawCalvinWheel(highlights, timeMs) {
+    const motion = currentMotionScale();
     const calvin = SCENE.calvin;
     const ringColor = highlights.calvin ? "rgba(92, 166, 102, 0.78)" : "rgba(131, 162, 132, 0.48)";
     const guideColor = highlights.calvin ? "rgba(116, 178, 121, 0.45)" : "rgba(145, 171, 146, 0.34)";
-    const rotationOffset = (timeMs * 0.00055) % (Math.PI * 2);
+    const rotationOffset = (timeMs * 0.00055 * motion) % (Math.PI * 2);
 
     ctx.save();
     ctx.strokeStyle = guideColor;
@@ -1069,11 +1340,13 @@
       const ty = Math.cos(arrowAngle);
       drawArrow(px - tx * 6, py - ty * 6, px + tx * 6, py + ty * 6, ringColor);
     }
+
     ctx.restore();
   }
 
   function drawPulseHighlights(highlights, timeMs) {
-    const pulse = 0.5 + 0.5 * Math.sin(timeMs / 200);
+    const motion = currentMotionScale();
+    const pulse = 0.5 + 0.5 * Math.sin((timeMs / 200) * motion);
     const membrane = SCENE.membrane;
 
     if (highlights.thylakoid) {
@@ -1104,7 +1377,8 @@
   }
 
   function drawInterconnectHint(timeMs) {
-    const drift = Math.sin(timeMs / 1400) * 4;
+    const motion = currentMotionScale();
+    const drift = Math.sin((timeMs / 1400) * motion) * 4;
     ctx.save();
     ctx.strokeStyle = "rgba(107, 149, 113, 0.28)";
     ctx.lineWidth = 1.8;
@@ -1292,6 +1566,20 @@
     ctx.stroke();
   }
 
+  function addRoundedRectPath(x, y, width, height, radius) {
+    const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
   function drawCircle(x, y, r, fill, stroke, lineWidth) {
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -1300,6 +1588,12 @@
     ctx.strokeStyle = stroke;
     ctx.lineWidth = lineWidth;
     ctx.stroke();
+  }
+
+  function addCirclePath(x, y, r) {
+    ctx.moveTo(x + r, y);
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.closePath();
   }
 
   function drawGlow(x, y, r, color, alpha) {
@@ -1317,6 +1611,7 @@
   }
 
   function drawPhoton(x, y, alpha) {
+    const palette = currentPalette();
     ctx.save();
     ctx.globalAlpha = alpha;
     drawGlow(x, y, 18, "rgb(255, 229, 127)", 0.34);
@@ -1326,39 +1621,45 @@
       const y1 = y + Math.sin(angle) * 8.2;
       const x2 = x + Math.cos(angle) * 12.8;
       const y2 = y + Math.sin(angle) * 12.8;
-      ctx.strokeStyle = "rgba(204, 140, 27, 0.46)";
+      ctx.strokeStyle = palette.photonRay;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
     }
-    drawCircle(x, y, 6.2, "#ffe67a", "#bf8b12", 1.3);
+    drawCircle(x, y, 6.2, palette.photonFill, palette.photonStroke, 1.3);
     ctx.restore();
   }
 
   function drawElectron(x, y, alpha) {
+    const palette = currentPalette();
     ctx.save();
     ctx.globalAlpha = alpha;
     drawGlow(x, y, 11, "rgb(143, 187, 255)", 0.3);
-    drawCircle(x, y, 4.4, "#8bb8ff", "#2f5f8f", 1.2);
+    drawCircle(x, y, 4.4, palette.electronFill, palette.electronStroke, 1.2);
     ctx.restore();
   }
 
   function drawIon(x, y, alpha) {
+    const palette = currentPalette();
+    const ionRadius = 7;
     ctx.save();
     ctx.globalAlpha = alpha;
-    drawCircle(x, y, 5.2, "#f8b8d4", "#9f4f72", 1.2);
-    ctx.fillStyle = "#7d2f53";
-    ctx.font = "bold 9px Trebuchet MS";
-    ctx.fillText("H+", x - 5, y + 3);
+    drawCircle(x, y, ionRadius, palette.ionFill, palette.ionStroke, 1.2);
+    ctx.fillStyle = palette.ionInk;
+    ctx.font = "700 7px Trebuchet MS";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("H+", x, y + 0.5);
     ctx.restore();
   }
 
   function drawIonDot(x, y, alpha, radius) {
+    const palette = currentPalette();
     ctx.save();
     ctx.globalAlpha = alpha;
-    drawCircle(x, y, radius, "#f4c4db", "#9f4f72", 1);
+    drawCircle(x, y, radius, palette.ionFill, palette.ionStroke, 1);
     ctx.restore();
   }
 
