@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photosynthesis Sequencing</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Photosynthesis Sequencing</h1>
+      <p>Build the sequence, check your understanding, then replay the process.</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel teacher-panel" aria-label="Teacher controls">
+        <h2>Teacher Controls</h2>
+        <label>
+          Mode
+          <select id="modeSelect">
+            <option value="practice">Practice</option>
+            <option value="challenge">Challenge</option>
+          </select>
+        </label>
+
+        <label>
+          Hints
+          <input type="checkbox" id="hintsToggle" checked />
+        </label>
+
+        <label>
+          Feedback
+          <select id="feedbackSelect">
+            <option value="guided">Guided</option>
+            <option value="binary">Binary</option>
+          </select>
+        </label>
+
+        <button id="resetBtn" type="button">Reset Activity</button>
+      </section>
+
+      <section class="panel sequence-panel" aria-label="Sequencing activity">
+        <div class="sequence-head">
+          <h2 id="phaseTitle">Light-Dependent Reactions (Thylakoid Membrane)</h2>
+          <p id="phaseHint" class="phase-hint"></p>
+        </div>
+
+        <div class="workspace">
+          <div>
+            <h3>Card Bank</h3>
+            <div id="cardBank" class="card-bank" aria-label="Unplaced cards"></div>
+          </div>
+
+          <div>
+            <h3>Sequence Slots</h3>
+            <ol id="slotList" class="slot-list" aria-label="Sequence slots"></ol>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="checkBtn" type="button">Check</button>
+          <button id="replayBtn" type="button" disabled>Replay Animation</button>
+          <button id="nextBtn" type="button" hidden>Start Calvin Cycle</button>
+        </div>
+
+        <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="panel animation-panel" aria-label="Animation panel">
+        <h2>Step Replay</h2>
+        <p id="caption" class="caption">Animation locked until the sequence is correct.</p>
+        <canvas id="animationCanvas" width="760" height="420"></canvas>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
