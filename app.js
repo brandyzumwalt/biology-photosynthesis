@@ -1307,9 +1307,10 @@
   function drawCalvinWheel(highlights, timeMs) {
     const motion = currentMotionScale();
     const calvin = SCENE.calvin;
-    const ringColor = highlights.calvin ? "rgba(92, 166, 102, 0.78)" : "rgba(131, 162, 132, 0.48)";
+    const isActive = Boolean(highlights.calvin);
+    const ringColor = isActive ? "rgba(92, 166, 102, 0.78)" : "rgba(131, 162, 132, 0.48)";
     const guideColor = highlights.calvin ? "rgba(116, 178, 121, 0.45)" : "rgba(145, 171, 146, 0.34)";
-    const rotationOffset = (timeMs * 0.00055 * motion) % (Math.PI * 2);
+    const segmentCount = 6;
 
     ctx.save();
     ctx.strokeStyle = guideColor;
@@ -1324,9 +1325,9 @@
     ctx.stroke();
     ctx.setLineDash([]);
 
-    for (let i = 0; i < 6; i += 1) {
-      const start = -Math.PI / 2 + i * ((Math.PI * 2) / 6) + rotationOffset;
-      const end = start + 0.7;
+    for (let i = 0; i < segmentCount; i += 1) {
+      const start = -Math.PI / 2 + i * ((Math.PI * 2) / segmentCount) + 0.1;
+      const end = start + 0.66;
       ctx.strokeStyle = ringColor;
       ctx.lineWidth = 4.2;
       ctx.beginPath();
@@ -1339,6 +1340,23 @@
       const tx = -Math.sin(arrowAngle);
       const ty = Math.cos(arrowAngle);
       drawArrow(px - tx * 6, py - ty * 6, px + tx * 6, py + ty * 6, ringColor);
+    }
+
+    if (isActive) {
+      const trailProgress = ((timeMs * 0.00011 * motion) % 1) * Math.PI * 2;
+      const angle = -Math.PI / 2 + trailProgress;
+      const trailRadius = calvin.inner + 6;
+      const trailX = calvin.x + Math.cos(angle) * trailRadius;
+      const trailY = calvin.y + Math.sin(angle) * trailRadius;
+
+      ctx.strokeStyle = "rgba(112, 186, 121, 0.58)";
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.arc(calvin.x, calvin.y, trailRadius, angle - 0.32, angle);
+      ctx.stroke();
+
+      drawGlow(trailX, trailY, 12, "#8cda99", 0.36);
+      drawCircle(trailX, trailY, 3.4, "#a7efb0", "#4f8f59", 1);
     }
 
     ctx.restore();
