@@ -9,41 +9,65 @@
   <body>
     <header class="app-header">
       <h1>Photosynthesis Sequencing</h1>
-      <p>Build the sequence, check your understanding, then replay the process.</p>
+      <p>Learn first with guided animation, then review by sequencing the cards.</p>
     </header>
 
-    <main class="layout">
-      <section class="panel teacher-panel" aria-label="Teacher controls">
-        <h2>Teacher Controls</h2>
-        <label>
-          Mode
-          <select id="modeSelect">
-            <option value="practice">Practice</option>
-            <option value="challenge">Challenge</option>
-          </select>
-        </label>
+    <nav class="view-nav" aria-label="Activity pages">
+      <button id="showLearnBtn" class="view-btn active" type="button">1. Learn Animation</button>
+      <button id="showReviewBtn" class="view-btn" type="button">2. Review Sequencing</button>
+    </nav>
 
-        <label>
-          Hints
-          <input type="checkbox" id="hintsToggle" checked />
-        </label>
+    <main class="main-wrap">
+      <section id="learnView" class="panel page-view" aria-label="Learn animation page">
+        <div class="view-head">
+          <h2>Learn: Step-By-Step Animation</h2>
+          <div class="phase-tabs" role="tablist" aria-label="Animation cycle">
+            <button id="learnLightBtn" class="phase-tab active" type="button">Light-Dependent</button>
+            <button id="learnCalvinBtn" class="phase-tab" type="button">Calvin Cycle</button>
+          </div>
+        </div>
 
-        <label>
-          Feedback
-          <select id="feedbackSelect">
-            <option value="guided">Guided</option>
-            <option value="binary">Binary</option>
-          </select>
-        </label>
+        <p id="learnCaption" class="caption" role="status" aria-live="polite"></p>
 
-        <button id="resetBtn" type="button">Reset Activity</button>
+        <div class="learn-actions">
+          <button id="startResetBtn" type="button">Start</button>
+          <button id="prevStepBtn" type="button">Previous Step</button>
+          <button id="nextStepBtn" type="button">Next Step</button>
+          <button id="replayStepBtn" type="button">Replay Current Step</button>
+          <button id="playFullBtn" type="button">Play Full Cycle</button>
+          <button id="goToReviewBtn" type="button">Go To Review</button>
+        </div>
+
+        <div class="animation-panel" aria-label="Animation panel">
+          <div class="legend" aria-label="Animation key">
+            <p class="legend-title">Key</p>
+            <div class="legend-grid">
+              <span class="legend-item"><span class="legend-swatch photon">✦</span> Photon (light energy)</span>
+              <span class="legend-item"><span class="legend-swatch photosystem"></span> Photosystem (PSII/PSI)</span>
+              <span class="legend-item"><span class="legend-swatch electron"></span> Electron</span>
+              <span class="legend-item"><span class="legend-swatch proton">H+</span> Hydrogen ion</span>
+              <span class="legend-item"><span class="legend-swatch bubble"></span> Oxygen bubble</span>
+              <span class="legend-item"><span class="legend-swatch atp">ATP</span> ATP token</span>
+              <span class="legend-item"><span class="legend-swatch nadph">NAD</span> NADPH token</span>
+              <span class="legend-item"><span class="legend-swatch co2">CO₂</span> Carbon dioxide</span>
+              <span class="legend-item"><span class="legend-swatch g3p">G3P</span> G3P token</span>
+            </div>
+          </div>
+
+          <canvas id="animationCanvas" width="760" height="420"></canvas>
+        </div>
       </section>
 
-      <section class="panel sequence-panel" aria-label="Sequencing activity">
-        <div class="sequence-head">
-          <h2 id="phaseTitle">Light-Dependent Reactions (Thylakoid Membrane)</h2>
-          <p id="phaseHint" class="phase-hint"></p>
+      <section id="reviewView" class="panel page-view hidden" aria-label="Review sequencing page">
+        <div class="view-head">
+          <h2 id="reviewPhaseTitle">Review: Light-Dependent Reactions</h2>
+          <div class="phase-tabs" role="tablist" aria-label="Review cycle">
+            <button id="reviewLightBtn" class="phase-tab active" type="button">Light-Dependent</button>
+            <button id="reviewCalvinBtn" class="phase-tab" type="button">Calvin Cycle</button>
+          </div>
         </div>
+
+        <p id="reviewHint" class="phase-hint"></p>
 
         <div class="workspace">
           <div>
@@ -57,19 +81,15 @@
           </div>
         </div>
 
-        <div class="actions">
-          <button id="checkBtn" type="button">Check</button>
-          <button id="replayBtn" type="button" disabled>Replay Animation</button>
-          <button id="nextBtn" type="button" hidden>Start Calvin Cycle</button>
+        <div class="review-actions">
+          <button id="checkBtn" type="button">Check Order</button>
+          <button id="reviewReplayBtn" type="button" disabled>Replay Full Cycle</button>
+          <button id="reviewNextCycleBtn" type="button" hidden>Start Calvin Cycle Review</button>
+          <button id="resetPhaseBtn" type="button">Reset This Cycle</button>
+          <button id="goToLearnBtn" type="button">Back To Learn</button>
         </div>
 
         <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
-      </section>
-
-      <section class="panel animation-panel" aria-label="Animation panel">
-        <h2>Step Replay</h2>
-        <p id="caption" class="caption">Animation locked until the sequence is correct.</p>
-        <canvas id="animationCanvas" width="760" height="420"></canvas>
       </section>
     </main>
 

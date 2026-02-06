@@ -6,7 +6,6 @@
   --ink: #e8f0ff;
   --muted: #a9bbd9;
   --accent: #39b5a4;
-  --accent-strong: #2f8dd8;
   --line: #2a3f5f;
   --slot: #13263b;
   --slot-index: #223a57;
@@ -30,7 +29,7 @@ body {
 }
 
 .app-header {
-  padding: 1.2rem 1rem 0.4rem;
+  padding: 1.1rem 1rem 0.35rem;
   text-align: center;
 }
 
@@ -41,19 +40,39 @@ body {
 }
 
 .app-header p {
-  margin: 0.4rem auto 0;
-  max-width: 55rem;
+  margin: 0.35rem auto 0;
+  max-width: 60rem;
   color: var(--muted);
 }
 
-.layout {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 280px 1fr;
-  grid-template-areas:
-    "controls sequence"
-    "animation animation";
-  padding: 0.8rem 1rem 1rem;
+.view-nav {
+  display: flex;
+  gap: 0.55rem;
+  justify-content: center;
+  padding: 0.45rem 1rem 0.9rem;
+}
+
+.view-btn {
+  border-radius: 10px;
+  border: 1px solid #3d5679;
+  padding: 0.5rem 0.85rem;
+  color: var(--ink);
+  background: #1f3250;
+  font: inherit;
+  cursor: pointer;
+}
+
+.view-btn.active {
+  background: #1d5f53;
+  border-color: #3ca08e;
+}
+
+.view-btn:hover {
+  background: #27416b;
+}
+
+.main-wrap {
+  padding: 0 1rem 1rem;
 }
 
 .panel {
@@ -64,56 +83,82 @@ body {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
-.teacher-panel {
-  grid-area: controls;
+.hidden {
+  display: none;
 }
 
-.sequence-panel {
-  grid-area: sequence;
+.page-view.hidden {
+  display: none !important;
 }
 
-.animation-panel {
-  grid-area: animation;
+.view-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
 }
 
 h2,
 h3 {
-  margin: 0 0 0.6rem;
+  margin: 0;
 }
 
-.teacher-panel label {
-  display: grid;
-  gap: 0.35rem;
-  margin-bottom: 0.75rem;
-  font-weight: 600;
-  color: #d4e0f5;
+.phase-tabs {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
 }
 
-select,
-button,
-input[type="checkbox"] {
+.phase-tab {
+  border-radius: 8px;
+  border: 1px solid #3d5679;
+  padding: 0.4rem 0.7rem;
+  background: #1f3250;
+  color: var(--ink);
   font: inherit;
+  cursor: pointer;
 }
 
-input[type="checkbox"] {
-  accent-color: var(--accent);
+.phase-tab.active {
+  background: #2a4b7a;
+  border-color: #5f86c3;
 }
 
-select,
+.phase-tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.caption {
+  margin: 0.65rem 0 0;
+  min-height: 3.4rem;
+  border-radius: 10px;
+  border: 1px solid #3d587d;
+  padding: 0.8rem 0.95rem;
+  background: #162a45;
+  color: #eff5ff;
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.learn-actions,
+.review-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  flex-wrap: wrap;
+}
+
 button {
   border-radius: 8px;
   border: 1px solid #3d5679;
-  padding: 0.45rem 0.6rem;
+  padding: 0.45rem 0.64rem;
   color: var(--ink);
-}
-
-select {
-  background: #1b2d46;
-}
-
-button {
-  cursor: pointer;
   background: #1f3250;
+  font: inherit;
+  cursor: pointer;
 }
 
 button:hover:not(:disabled) {
@@ -126,30 +171,202 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button:focus-visible,
-select:focus-visible {
-  outline: 2px solid #61c7bb;
-  outline-offset: 1px;
+#playFullBtn,
+#reviewReplayBtn {
+  background: #274677;
+  border-color: #4c79ba;
 }
 
-#resetBtn {
+#startResetBtn {
+  background: #6b4f1d;
+  border-color: #b8873b;
+}
+
+#goToReviewBtn,
+#goToLearnBtn {
+  background: #1d5f53;
+  border-color: #3ca08e;
+}
+
+#checkBtn {
+  background: #1d5f53;
+  border-color: #3ca08e;
+}
+
+#reviewNextCycleBtn {
+  background: #6b4f1d;
+  border-color: #b8873b;
+}
+
+.animation-panel {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: 250px minmax(0, 1fr);
+  align-items: start;
+}
+
+.legend {
+  grid-column: 1;
+  border: 1px solid #3b577e;
+  border-radius: 10px;
+  background: #152a46;
+  padding: 0.6rem 0.65rem;
+}
+
+.legend-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.86rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #b9cdeb;
+  font-weight: 700;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  font-size: 0.86rem;
+  color: #dde8fb;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.legend-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.legend-swatch.photon {
+  background: radial-gradient(circle, #ffe88a 30%, #f7c64d 75%);
+  border: 1px solid #c18a24;
+  color: #7f4d00;
+}
+
+.legend-swatch.photosystem {
+  background: radial-gradient(circle, #b8e47c 35%, #8fbe4e 80%);
+  border: 1px solid #4f7f2a;
+}
+
+.legend-swatch.electron {
+  background: radial-gradient(circle, #c2ddff 30%, #6ea9e8 82%);
+  border: 1px solid #2f5f8f;
+}
+
+.legend-swatch.proton {
+  background: radial-gradient(circle, #ffd7e7 35%, #f09ec4 80%);
+  border: 1px solid #8f4a69;
+  color: #6f2948;
+}
+
+.legend-swatch.bubble {
+  background: radial-gradient(circle, #ebfaff 35%, #b7e2f6 80%);
+  border: 1px solid #5ca7c2;
+}
+
+.legend-swatch.atp {
+  background: linear-gradient(180deg, #ffe2ad 0%, #f1b95f 100%);
+  border: 1px solid #8b5a17;
+  color: #6d430e;
+  width: 28px;
+  border-radius: 7px;
+}
+
+.legend-swatch.nadph {
+  background: linear-gradient(180deg, #d9edff 0%, #9fcaf1 100%);
+  border: 1px solid #1f4f7f;
+  color: #16395b;
+  width: 34px;
+  border-radius: 7px;
+}
+
+.legend-swatch.co2 {
+  background: radial-gradient(circle, #f0f5ff 35%, #c8d8f8 80%);
+  border: 1px solid #55658d;
+  color: #304a78;
+  width: 28px;
+  border-radius: 7px;
+}
+
+.legend-swatch.g3p {
+  background: linear-gradient(180deg, #dff6de 0%, #9fd89f 100%);
+  border: 1px solid #2f6b38;
+  color: #214b28;
+  width: 34px;
+  border-radius: 7px;
+}
+
+#animationCanvas {
+  grid-column: 2;
   width: 100%;
-  margin-top: 0.25rem;
-}
-
-.sequence-head {
-  margin-bottom: 0.8rem;
+  max-width: 1100px;
+  height: auto;
+  display: block;
+  margin: 0;
+  border: 1px solid #3c567d;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #122033 0%, #13283f 45%, #16334c 100%);
 }
 
 .phase-hint {
-  margin: 0;
+  margin: 0.65rem 0 0;
   color: var(--muted);
+}
+
+#reviewView {
+  min-height: calc(100vh - 210px);
+  display: flex;
+  flex-direction: column;
+}
+
+#reviewView .workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+}
+
+#reviewView .workspace > div {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#reviewView .workspace > div h3 {
+  margin-bottom: 0.5rem;
+}
+
+#reviewView .card-bank,
+#reviewView .slot-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+#reviewView .review-actions,
+#reviewView .feedback {
+  flex: 0 0 auto;
 }
 
 .workspace {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
+  margin-top: 0.6rem;
 }
 
 .card-bank,
@@ -239,32 +456,6 @@ select:focus-visible {
   align-self: center;
 }
 
-.actions {
-  display: flex;
-  gap: 0.55rem;
-  margin-top: 0.7rem;
-  flex-wrap: wrap;
-}
-
-.actions button {
-  background: #203858;
-}
-
-#checkBtn {
-  background: #1d5f53;
-  border-color: #3ca08e;
-}
-
-#replayBtn {
-  background: #274677;
-  border-color: #4c79ba;
-}
-
-#nextBtn {
-  background: #6b4f1d;
-  border-color: #b8873b;
-}
-
 .feedback {
   margin-top: 0.75rem;
   min-height: 2rem;
@@ -293,48 +484,26 @@ select:focus-visible {
   background: #3f1f28;
 }
 
-.animation-panel {
-  display: grid;
-  gap: 0.55rem;
-}
-
-#animationCanvas {
-  width: min(100%, 80vw);
-  height: auto;
-  display: block;
-  margin: 0 auto;
-  border: 1px solid #3c567d;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #122033 0%, #13283f 45%, #16334c 100%);
-}
-
-.caption {
-  margin: 0;
-  min-height: 4.4rem;
-  border-radius: 10px;
-  border: 1px solid #3d587d;
-  padding: 0.95rem 1rem;
-  background: #162a45;
-  color: #eff5ff;
-  font-size: 1.08rem;
-  line-height: 1.45;
-  font-weight: 600;
-}
-
 @media (max-width: 980px) {
-  .layout {
+  .animation-panel {
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "controls"
-      "sequence"
-      "animation";
+  }
+
+  .legend,
+  #animationCanvas {
+    grid-column: 1;
   }
 
   .workspace {
     grid-template-columns: 1fr;
   }
 
-  #animationCanvas {
-    width: 100%;
+  #reviewView {
+    min-height: auto;
+  }
+
+  #reviewView .card-bank,
+  #reviewView .slot-list {
+    max-height: 45vh;
   }
 }

@@ -1,24 +1,36 @@
 # Photosynthesis Sequencing Web App
 
-Offline browser activity for sequencing photosynthesis steps and replaying each step as a simple animation.
+Offline browser activity for high-school biology classes.
 
-## Included in V1
+## Flow
 
-- Drag-and-drop sequencing for:
+1. **Learn Animation** page:
+- Students step through each phase animation one step at a time.
+- Controls: previous/next step, replay current step, play full cycle.
+
+2. **Review Sequencing** page:
+- Students drag cards from the bank into sequence slots.
+- Guided feedback helps correct misunderstandings.
+- Full-cycle replay is available after a phase is solved.
+
+## Included
+
+- Two-phase content:
   - Light-Dependent Reactions (Thylakoid Membrane)
   - Calvin Cycle (Stroma)
-- Auto-swap when dropping on an occupied slot
-- No duplicate card placement
-- `Check` with binary or guided feedback
-- Teacher controls for mode, hints, feedback style, and reset
-- Canvas replay animation unlocked after correct sequencing
+- Animation-first learning page with step controls
+- Review sequencing page with drag/drop
+- Auto-swap on occupied slots
+- No duplicate placement
+- Guided feedback (always on)
+- Practice mode only (permanent)
 
-## Not included in V1
+## Removed by design
 
-- Timer and scoring
-- Label hide/show assessment mode
-- Mini recording sheet
-- Vocabulary-level toggle
+- Teacher controls
+- Hints toggle
+- Feedback mode toggle
+- Challenge/testing mode options
 
 ## Run
 
